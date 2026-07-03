@@ -3,6 +3,8 @@ import Hero from "@/components/sections/Hero";
 import WhoWeServe from "@/components/sections/WhoWeServe";
 import Capabilities from "@/components/sections/Capabilities";
 import WhySamnkosi from "@/components/sections/WhySamnkosi";
+import LeadershipPreview from "@/components/sections/LeadershipPreview";
+import Footer from "@/components/layout/Footer";
 
 export default function Home() {
   return (
@@ -12,6 +14,8 @@ export default function Home() {
       <WhoWeServe />
       <Capabilities />
       <WhySamnkosi />
+      <LeadershipPreview />
+      <Footer />
     </>
   );
 }
