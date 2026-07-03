@@ -1,4 +1,6 @@
 import Container from "@/components/layout/Container";
+import SectionHeader from "@/components/ui/SectionHeader";
+import Card from "@/components/ui/Card";
 import { Landmark, Building2, Building, School, Briefcase } from "lucide-react";
 
 const sectors = [
@@ -38,24 +40,19 @@ export default function WhoWeServe() {
   return (
     <section className="bg-[var(--gray)] py-24">
       <Container>
-        <h2 className="text-4xl font-bold text-[var(--navy)]">Who We Serve</h2>
+        <SectionHeader
+          eyebrow="Who We Serve"
+          title="Supporting Organizations Across Every Level"
+          description="SAMNKOSI Technology Group partners with organizations across the public and private sectors to deliver secure, mission-driven technology solutions."
+        />
 
-        <p className="mt-4 max-w-2xl text-gray-600">
-          SAMNKOSI Technology Group partners with organizations across the
-          public and private sectors to deliver secure, mission-driven
-          technology solutions.
-        </p>
-
-        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {sectors.map((sector) => {
             const Icon = sector.icon;
 
             return (
-              <div
-                key={sector.title}
-                className="rounded-xl bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-              >
-                <div className="mb-6 inline-flex rounded-lg bg-[var(--gray)] p-3">
+              <Card key={sector.title}>
+                <div className="mb-6 inline-flex rounded-xl bg-[var(--gray)] p-3">
                   <Icon className="text-[var(--blue)]" size={28} />
                 </div>
 
@@ -63,8 +60,10 @@ export default function WhoWeServe() {
                   {sector.title}
                 </h3>
 
-                <p className="mt-3 text-gray-600">{sector.description}</p>
-              </div>
+                <p className="mt-4 leading-7 text-gray-600">
+                  {sector.description}
+                </p>
+              </Card>
             );
           })}
         </div>
