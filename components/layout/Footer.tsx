@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Container from "@/components/layout/Container";
+import Brand from "@/components/layout/Brand";
 import { company } from "@/config/company";
+import { navigation } from "@/config/navigation";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -8,50 +10,64 @@ export default function Footer() {
   return (
     <footer className="bg-[var(--navy)] text-white">
       <Container>
-        <div className="grid gap-12 py-16 md:grid-cols-3">
+        <div className="grid gap-12 py-16 lg:grid-cols-3">
           {/* Company */}
           <div>
-            <h3 className="text-2xl font-bold">{company.shortName}</h3>
+            <Brand />
 
-            <p className="mt-4 text-gray-300 leading-7">{company.tagline}</p>
+            <p className="mt-6 max-w-sm leading-7 text-gray-300">
+              {company.tagline}
+            </p>
 
-            <p className="mt-6 text-gray-400 text-sm">
+            <p className="mt-6 text-sm leading-7 text-gray-400">
               Secure technology solutions supporting federal, state, local
               government, educational institutions, and commercial
               organizations.
             </p>
           </div>
 
-          {/* Quick Links */}
+          {/* Navigation */}
           <div>
-            <h4 className="font-semibold text-lg">Quick Links</h4>
+            <h3 className="text-lg font-semibold">Quick Links</h3>
 
-            <ul className="mt-5 space-y-3">
-              <li>
-                <Link href="/">Home</Link>
-              </li>
-              <li>
-                <Link href="/about">About</Link>
-              </li>
-              <li>
-                <Link href="/capabilities">Capabilities</Link>
-              </li>
-              <li>
-                <Link href="/industries">Industries</Link>
-              </li>
-              <li>
-                <Link href="/contact">Contact</Link>
-              </li>
+            <ul className="mt-6 space-y-3">
+              {navigation.map((item) => (
+                <li key={item.name}>
+                  <Link
+                    href={item.href}
+                    className="text-gray-300 transition hover:text-white"
+                  >
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Contact */}
           <div>
-            <h4 className="font-semibold text-lg">Contact</h4>
+            <h3 className="text-lg font-semibold">Contact</h3>
 
-            <ul className="mt-5 space-y-3">
-              <li>{company.emails.general}</li>
-              <li>{company.website}</li>
+            <ul className="mt-6 space-y-3 text-gray-300">
+              <li>
+                <a
+                  href={`mailto:${company.emails.general}`}
+                  className="transition hover:text-white"
+                >
+                  {company.emails.general}
+                </a>
+              </li>
+
+              <li>
+                <a
+                  href={company.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition hover:text-white"
+                >
+                  {company.website}
+                </a>
+              </li>
             </ul>
           </div>
         </div>
