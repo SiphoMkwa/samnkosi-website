@@ -2,6 +2,7 @@ import Link from "next/link";
 import Container from "@/components/layout/Container";
 import Button from "@/components/ui/Button";
 import Brand from "@/components/layout/Brand";
+import MobileMenu from "@/components/navigation/MobileMenu";
 import { navigation } from "@/config/navigation";
 
 export default function Navbar() {
@@ -26,6 +27,9 @@ export default function Navbar() {
 
             <Button>Contact Us</Button>
           </nav>
+
+          {/* Mobile Navigation */}
+          <MobileMenu />
         </div>
       </Container>
     </header>
