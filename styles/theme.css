@@ -1,0 +1,22 @@
+:root {
+  /* Brand Colors */
+  --background: #ffffff;
+  --foreground: #2e2e2e;
+
+  --navy: #0b1f3a;
+  --blue: #1e5aa8;
+  --gold: #c89b3c;
+  --gray: #f4f6f8;
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+
+  /* Shadows */
+  --shadow-sm: 0 4px 10px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 12px 30px rgba(0, 0, 0, 0.08);
+
+  /* Transition */
+  --transition: all 0.3s ease;
+}
