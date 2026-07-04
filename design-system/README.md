@@ -1,122 +1,59 @@
-# SAMNKOSI Design System
+# SAMNKOSI Technology Group
 
-Version: 1.0
+Official website for SAMNKOSI Technology Group.
 
-Status: Active
+## Technology Stack
 
----
+- Next.js 16
+- React
+- TypeScript
+- Tailwind CSS
+- Framer Motion
 
-# Purpose
+## Development
 
-The SAMNKOSI Design System defines the visual language, interaction patterns, and reusable components used across all SAMNKOSI digital products.
+Install dependencies:
 
-Its purpose is to ensure every application, website, document, and customer experience reflects a consistent brand identity built on trust, professionalism, accessibility, and technical excellence.
+```bash
+npm install
+```
 
----
+Start the development server:
 
-# Design Principles
+```bash
+npm run dev
+```
 
-## Trust
+Open:
 
-Every interface should communicate reliability and confidence.
+http://localhost:3000
 
----
+## Build
 
-## Clarity
+```bash
+npm run build
+```
 
-Content should be easy to understand and visually organized.
+## Project Structure
 
----
+app/
+components/
+content/
+config/
+design-system/
+docs/
+public/
+styles/
 
-## Simplicity
+## Branch Strategy
 
-Interfaces should remove unnecessary complexity.
+main → Production
 
----
+development → Integration
 
-## Consistency
+feature/\* → Feature development
 
-Components should behave consistently across every page.
+## License
 
----
-
-## Accessibility
-
-Products should be usable by everyone.
-
----
-
-## Performance
-
-Fast experiences are part of the product.
-
----
-
-# Foundations
-
-The design system is built upon:
-
-- Color
-- Typography
-- Spacing
-- Grid
-- Icons
-- Motion
-- Components
-
----
-
-# Components
-
-Core components include:
-
-- Brand
-- Button
-- Card
-- CTA
-- Section
-- SectionHeader
-- Badge
-- FeatureCard
-- Stat
-- Footer
-- Navigation
-
----
-
-# Patterns
-
-The design system includes reusable layouts for:
-
-- Hero
-- Content Sections
-- Leadership
-- Capability Cards
-- Contact Forms
-- Calls to Action
-- Footer
-
----
-
-# Development Philosophy
-
-Every new feature should:
-
-1. Reuse existing components where possible.
-2. Maintain visual consistency.
-3. Be responsive by default.
-4. Meet accessibility standards.
-5. Be production-ready before merging.
-
----
-
-# Long-Term Vision
-
-The SAMNKOSI Design System will support future digital products including:
-
-- Marketing Website
-- Client Portal
-- Proposal Management
-- Internal Engineering Tools
-- Knowledge Base
-- Customer Dashboard
+Copyright © SAMNKOSI Technology Group.
+All Rights Reserved.
