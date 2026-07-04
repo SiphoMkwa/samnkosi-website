@@ -1,4 +1,7 @@
 import Container from "@/components/layout/Container";
+import SectionHeader from "@/components/ui/SectionHeader";
+import Card from "@/components/ui/Card";
+import FadeIn from "@/components/ui/FadeIn";
 
 const capabilities = [
   {
@@ -35,33 +38,30 @@ const capabilities = [
 
 export default function Capabilities() {
   return (
-    <section className="py-24">
-      <Container>
-        <h2 className="text-4xl font-bold text-[var(--navy)]">
-          Our Capabilities
-        </h2>
+    <FadeIn>
+      <section className="py-24">
+        <Container>
+          <SectionHeader
+            eyebrow="Capabilities"
+            title="Our Capabilities"
+            description="We provide secure technology and professional services that help organizations modernize operations, strengthen cybersecurity, and accomplish their missions."
+          />
 
-        <p className="mt-4 max-w-2xl text-gray-600">
-          We provide secure technology and professional services that help
-          organizations modernize operations, strengthen cybersecurity, and
-          accomplish their missions.
-        </p>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {capabilities.map((capability) => (
+              <Card key={capability.title}>
+                <h3 className="text-xl font-semibold text-[var(--navy)]">
+                  {capability.title}
+                </h3>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {capabilities.map((capability) => (
-            <div
-              key={capability.title}
-              className="rounded-xl border border-gray-200 p-8 transition hover:border-[var(--blue)] hover:shadow-md"
-            >
-              <h3 className="text-xl font-semibold text-[var(--navy)]">
-                {capability.title}
-              </h3>
-
-              <p className="mt-3 text-gray-600">{capability.description}</p>
-            </div>
-          ))}
-        </div>
-      </Container>
-    </section>
+                <p className="mt-4 leading-7 text-gray-600">
+                  {capability.description}
+                </p>
+              </Card>
+            ))}
+          </div>
+        </Container>
+      </section>
+    </FadeIn>
   );
 }
