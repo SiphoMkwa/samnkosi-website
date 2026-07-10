@@ -1,39 +1,7 @@
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/layout/Container";
-
-const capabilities = [
-  {
-    title: "Cybersecurity",
-    description:
-      "Risk management, Zero Trust, security assessments, compliance, and cyber resilience.",
-  },
-  {
-    title: "Cloud Engineering",
-    description:
-      "Cloud architecture, migration, modernization, and infrastructure optimization.",
-  },
-  {
-    title: "DevSecOps",
-    description:
-      "Secure CI/CD pipelines, Infrastructure as Code, automation, and continuous delivery.",
-  },
-  {
-    title: "Enterprise IT",
-    description:
-      "Networking, systems administration, endpoint management, and IT modernization.",
-  },
-  {
-    title: "AI & Automation",
-    description:
-      "Workflow automation, AI integration, and intelligent business solutions.",
-  },
-  {
-    title: "Program Management",
-    description:
-      "Project governance, stakeholder engagement, planning, and operational excellence.",
-  },
-];
+import { capabilities } from "@/config/capabilities";
 
 export default function CapabilitiesPage() {
   return (

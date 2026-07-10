@@ -67,7 +67,7 @@ export default function LeadershipPreview() {
         </div>
 
         <div className="mt-12">
-          <Button>Meet Our Leadership Team</Button>
+          <Button href="/leadership">Meet Our Leadership Team</Button>
         </div>
       </Container>
     </section>

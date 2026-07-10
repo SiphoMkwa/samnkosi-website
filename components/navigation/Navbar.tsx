@@ -25,7 +25,7 @@ export default function Navbar() {
               </Link>
             ))}
 
-            <Button>Contact Us</Button>
+            <Button href="/contact">Contact Us</Button>
           </nav>
 
           {/* Mobile Navigation */}

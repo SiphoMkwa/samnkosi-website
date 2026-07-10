@@ -1,5 +1,20 @@
 import type { Metadata } from "next";
+import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-heading",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-body",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://samnkosi.com"),
@@ -22,7 +37,7 @@ export const metadata: Metadata = {
     "Federal Contractor",
     "Technology Consulting",
     "SAMNKOSI",
-    "South Africa",
+    "Maryland",
   ],
 
   authors: [
@@ -55,7 +70,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth">
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      className={`${spaceGrotesk.variable} ${inter.variable}`}
+    >
       <body>{children}</body>
     </html>
   );

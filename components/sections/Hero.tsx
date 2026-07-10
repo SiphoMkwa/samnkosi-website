@@ -62,9 +62,11 @@ export default function Hero() {
             </p>
 
             <div className="mt-10 flex flex-wrap gap-4">
-              <Button>Explore Capabilities</Button>
+              <Button href="/capabilities">{hero.primaryButton}</Button>
 
-              <Button variant="secondary">Contact Us</Button>
+              <Button href="/contact" variant="secondary">
+                {hero.secondaryButton}
+              </Button>
             </div>
 
             <div className="mt-14 grid grid-cols-2 gap-5">

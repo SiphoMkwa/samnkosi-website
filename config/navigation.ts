@@ -8,6 +8,10 @@ export const navigation = [
     href: "/industries",
   },
   {
+    name: "Federal Readiness",
+    href: "/federal-readiness",
+  },
+  {
     name: "About",
     href: "/about",
   },

@@ -1,19 +1,19 @@
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/layout/Container";
+import { leadership } from "@/config/leadership";
+import { company } from "@/config/company";
 
 const leaders = [
   {
-    name: "Ayola Mgqolozana",
-    title: "Chief Executive Officer",
+    ...leadership[0],
     bio: "Ayola provides the strategic leadership and executive direction of SAMNKOSI Technology Group. As Chief Executive Officer, he defines the company's vision, cultivates strategic partnerships, and guides its long-term growth. He leads the organization with a focus on innovation, client success, and operational excellence.",
-    email: "amgqolozana@samnkosi.com",
+    email: company.emails.ceo,
   },
   {
-    name: "Sipho Mkhwanazi",
-    title: "Chief Operating Officer",
-    bio: "Sipho oversees the operational execution of the company's strategic objectives. Working under the leadership and direction of the Chief Executive Officer, he is responsible for technology delivery, operational management, process optimization, and organizational performance.",
-    email: "smkhwanazi@samnkosi.com",
+    ...leadership[1],
+    bio: "Sipho leads technology strategy and engineering delivery for SAMNKOSI Technology Group, spanning cloud architecture, DevSecOps, cybersecurity, and automation. He is responsible for translating the company's strategic objectives into secure, scalable technical solutions for clients.",
+    email: company.emails.engineering,
   },
 ];
 

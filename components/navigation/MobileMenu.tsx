@@ -30,7 +30,9 @@ export default function MobileMenu() {
             ))}
 
             <div className="mt-6">
-              <Button>Contact Us</Button>
+              <Button href="/contact" onClick={() => setOpen(false)}>
+                Contact Us
+              </Button>
             </div>
           </nav>
         </div>

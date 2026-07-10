@@ -1,8 +1,16 @@
 import Link from "next/link";
+import { LinkedInIcon, XIcon, GitHubIcon } from "@/components/icons/SocialIcons";
 import Container from "@/components/layout/Container";
 import Brand from "@/components/layout/Brand";
 import { company } from "@/config/company";
 import { navigation } from "@/config/navigation";
+import { social } from "@/config/social";
+
+const socialLinks = [
+  { href: social.linkedin, label: "LinkedIn", icon: LinkedInIcon },
+  { href: social.x, label: "X", icon: XIcon },
+  { href: social.github, label: "GitHub", icon: GitHubIcon },
+].filter((link) => link.href);
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -69,6 +77,23 @@ export default function Footer() {
                 </a>
               </li>
             </ul>
+
+            {socialLinks.length > 0 && (
+              <div className="mt-6 flex gap-4">
+                {socialLinks.map(({ href, label, icon: Icon }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className="text-gray-300 transition hover:text-white"
+                  >
+                    <Icon size={20} />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

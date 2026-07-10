@@ -1,12 +1,14 @@
 :root {
-  /* Brand Colors */
+  /* Brand Colors — see design-system/Colors.md */
   --background: #ffffff;
   --foreground: #2e2e2e;
 
-  --navy: #0b1f3a;
-  --blue: #1e5aa8;
-  --gold: #c89b3c;
-  --gray: #f4f6f8;
+  --navy: #0f2747;
+  --blue: #2563eb;
+  --gold: #c8a24a;
+  --slate: #64748b;
+  --success: #16a34a;
+  --gray: #f5f7fa;
 
   /* Border Radius */
   --radius-sm: 8px;

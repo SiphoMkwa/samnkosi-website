@@ -1,0 +1,1401 @@
+From 6d9437989a96f6149968b1b92d125d24a1419a2e Mon Sep 17 00:00:00 2001
+From: Sipho Mkwananzi <sipho.mkwa@gmail.com>
+Date: Fri, 10 Jul 2026 13:29:38 +0000
+Subject: [PATCH] Complete homepage/interior page audit fixes and contact form
+
+- Fix Button component: all CTAs now use real hrefs (Navbar, MobileMenu,
+  Hero, LeadershipPreview, CTA) instead of dead no-op buttons
+- Resolve leadership title inconsistency: standardize on "Director of
+  Technology & Engineering" across config, homepage, and leadership/contact
+  pages; align bios accordingly
+- Add Federal Readiness to navigation and sitemap (was previously orphaned)
+- Populate config/capabilities.ts and config/social.ts; refactor
+  Capabilities section and capabilities page to use shared config instead
+  of duplicated data
+- Align theme.css color tokens with design-system/Colors.md
+  (Federal Navy #0F2747, Mission Blue #2563EB, gold/slate/success added)
+- Wire up Space Grotesk (headings) and Inter (body) via next/font/google
+  per design-system/Typography.md
+- Build real contact form: React Hook Form + Zod validation, honeypot
+  spam field, POSTs to /api/contact which sends via Resend
+  (falls back to server-side logging if RESEND_API_KEY is unset)
+- Add footer social icons (LinkedIn/X/GitHub) using custom SocialIcons
+  component, since installed lucide-react version no longer ships
+  trademarked brand icons
+- Fix ESLint unescaped-entity errors in contact and industries pages
+
+npm run build and npm run lint both pass clean.
+---
+ app/api/contact/route.ts                  |  94 ++++++++++++
+ app/capabilities/page.tsx                 |  34 +----
+ app/contact/page.tsx                      |  37 ++---
+ app/globals.css                           |  11 +-
+ app/industries/page.tsx                   |   2 +-
+ app/layout.tsx                            |  23 ++-
+ app/leadership/page.tsx                   |  14 +-
+ app/page.tsx                              |   2 +
+ app/sitemap.ts                            |   3 +
+ app/styles/theme.css                      |  12 +-
+ components/forms/ContactForm.tsx          | 177 ++++++++++++++++++++++
+ components/icons/SocialIcons.tsx          |  49 ++++++
+ components/layout/Footer.tsx              |  25 +++
+ components/navigation/MobileMenu.tsx      |   4 +-
+ components/navigation/Navbar.tsx          |   2 +-
+ components/sections/Capabilities.tsx      |  34 +----
+ components/sections/Hero.tsx              |   6 +-
+ components/sections/LeadershipPreview.tsx |   2 +-
+ components/ui/Button.tsx                  |  55 ++++++-
+ components/ui/CTA.tsx                     |  10 +-
+ config/capabilities.ts                    |  32 ++++
+ config/navigation.ts                      |   4 +
+ config/social.ts                          |   5 +
+ package-lock.json                         | 114 --------------
+ 24 files changed, 521 insertions(+), 230 deletions(-)
+ create mode 100644 app/api/contact/route.ts
+ create mode 100644 components/forms/ContactForm.tsx
+ create mode 100644 components/icons/SocialIcons.tsx
+
+diff --git a/app/api/contact/route.ts b/app/api/contact/route.ts
+new file mode 100644
+index 0000000..fcf517a
+--- /dev/null
++++ b/app/api/contact/route.ts
+@@ -0,0 +1,94 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { company } from "@/config/company";
++
++const contactSchema = z.object({
++  name: z.string().trim().min(2, "Please enter your full name."),
++  email: z.string().trim().email("Please enter a valid email address."),
++  organization: z.string().trim().optional(),
++  message: z.string().trim().min(10, "Please include a short message."),
++  // Honeypot field — real users never fill this in; bots usually do.
++  company_website: z.string().max(0).optional(),
++});
++
++export async function POST(request: NextRequest) {
++  let body: unknown;
++
++  try {
++    body = await request.json();
++  } catch {
++    return NextResponse.json(
++      { error: "Invalid request body." },
++      { status: 400 }
++    );
++  }
++
++  const parsed = contactSchema.safeParse(body);
++
++  if (!parsed.success) {
++    return NextResponse.json(
++      { error: parsed.error.issues[0]?.message ?? "Invalid submission." },
++      { status: 400 }
++    );
++  }
++
++  const { name, email, organization, message } = parsed.data;
++
++  const resendApiKey = process.env.RESEND_API_KEY;
++  const toAddress = process.env.CONTACT_TO_EMAIL || company.emails.general;
++
++  if (!resendApiKey) {
++    // No email provider configured yet. Log server-side so the submission
++    // isn't silently lost during development, but let the caller know
++    // delivery isn't actually wired up.
++    console.warn(
++      "[contact] RESEND_API_KEY not set — submission received but not emailed:",
++      { name, email, organization, message }
++    );
++
++    return NextResponse.json(
++      {
++        ok: true,
++        delivered: false,
++        note: "Submission logged, but no email provider is configured yet.",
++      },
++      { status: 200 }
++    );
++  }
++
++  try {
++    const resendResponse = await fetch("https://api.resend.com/emails", {
++      method: "POST",
++      headers: {
++        Authorization: `Bearer ${resendApiKey}`,
++        "Content-Type": "application/json",
++      },
++      body: JSON.stringify({
++        from: process.env.CONTACT_FROM_EMAIL || "SAMNKOSI Website <onboarding@resend.dev>",
++        to: [toAddress],
++        reply_to: email,
++        subject: `New enquiry from ${name}${organization ? ` (${organization})` : ""}`,
++        text: `Name: ${name}\nEmail: ${email}\nOrganization: ${organization || "—"}\n\nMessage:\n${message}`,
++      }),
++    });
++
++    if (!resendResponse.ok) {
++      const errorBody = await resendResponse.text();
++      console.error("[contact] Resend API error:", errorBody);
++
++      return NextResponse.json(
++        { error: "We couldn't send your message right now. Please email us directly." },
++        { status: 502 }
++      );
++    }
++
++    return NextResponse.json({ ok: true, delivered: true }, { status: 200 });
++  } catch (err) {
++    console.error("[contact] Failed to send email:", err);
++
++    return NextResponse.json(
++      { error: "We couldn't send your message right now. Please email us directly." },
++      { status: 502 }
++    );
++  }
++}
+diff --git a/app/capabilities/page.tsx b/app/capabilities/page.tsx
+index f8314ec..743d4e5 100644
+--- a/app/capabilities/page.tsx
++++ b/app/capabilities/page.tsx
+@@ -1,39 +1,7 @@
+ import Navbar from "@/components/navigation/Navbar";
+ import Footer from "@/components/layout/Footer";
+ import Container from "@/components/layout/Container";
+-
+-const capabilities = [
+-  {
+-    title: "Cybersecurity",
+-    description:
+-      "Risk management, Zero Trust, security assessments, compliance, and cyber resilience.",
+-  },
+-  {
+-    title: "Cloud Engineering",
+-    description:
+-      "Cloud architecture, migration, modernization, and infrastructure optimization.",
+-  },
+-  {
+-    title: "DevSecOps",
+-    description:
+-      "Secure CI/CD pipelines, Infrastructure as Code, automation, and continuous delivery.",
+-  },
+-  {
+-    title: "Enterprise IT",
+-    description:
+-      "Networking, systems administration, endpoint management, and IT modernization.",
+-  },
+-  {
+-    title: "AI & Automation",
+-    description:
+-      "Workflow automation, AI integration, and intelligent business solutions.",
+-  },
+-  {
+-    title: "Program Management",
+-    description:
+-      "Project governance, stakeholder engagement, planning, and operational excellence.",
+-  },
+-];
++import { capabilities } from "@/config/capabilities";
+ 
+ export default function CapabilitiesPage() {
+   return (
+diff --git a/app/contact/page.tsx b/app/contact/page.tsx
+index fd967d6..67a49bf 100644
+--- a/app/contact/page.tsx
++++ b/app/contact/page.tsx
+@@ -1,6 +1,7 @@
+ import Navbar from "@/components/navigation/Navbar";
+ import Footer from "@/components/layout/Footer";
+ import Container from "@/components/layout/Container";
++import ContactForm from "@/components/forms/ContactForm";
+ 
+ export default function ContactPage() {
+   return (
+@@ -12,9 +13,9 @@ export default function ContactPage() {
+           <h1 className="text-5xl font-bold text-[var(--navy)]">Contact Us</h1>
+ 
+           <p className="mt-6 max-w-3xl text-lg leading-8 text-gray-600">
+-            Whether you're exploring a new technology initiative, seeking a
++            Whether you&apos;re exploring a new technology initiative, seeking a
+             trusted delivery partner, or looking to strengthen your
+-            organization's cybersecurity and digital capabilities, we'd welcome
++            organization&apos;s cybersecurity and digital capabilities, we&apos;d welcome
+             the opportunity to connect.
+           </p>
+ 
+@@ -39,14 +40,14 @@ export default function ContactPage() {
+ 
+                   <p className="mt-3 text-sm leading-6 text-gray-600">
+                     Provides the strategic leadership and executive direction of
+-                    SAMNKOSI Technology Group, guiding the company's vision,
++                    SAMNKOSI Technology Group, guiding the company&apos;s vision,
+                     growth, partnerships, and long-term success.
+                   </p>
+                 </div>
+ 
+                 <div>
+                   <h3 className="text-lg font-semibold text-[var(--navy)]">
+-                    Chief Operating Officer
++                    Director of Technology &amp; Engineering
+                   </h3>
+ 
+                   <p className="mt-1 font-medium text-gray-800">
+@@ -56,10 +57,9 @@ export default function ContactPage() {
+                   <p className="text-gray-600">smkhwanazi@samnkosi.com</p>
+ 
+                   <p className="mt-3 text-sm leading-6 text-gray-600">
+-                    Oversees operational execution, technology delivery, and
+-                    organizational performance, ensuring strategic objectives
+-                    are translated into measurable client outcomes under the
+-                    leadership and direction of the Chief Executive Officer.
++                    Leads technology strategy, cloud engineering, DevSecOps,
++                    cybersecurity, and automation, and oversees the delivery
++                    of secure, scalable technical solutions for clients.
+                   </p>
+                 </div>
+ 
+@@ -81,29 +81,20 @@ export default function ContactPage() {
+               </div>
+             </section>
+ 
+-            {/* Contact Form Placeholder */}
++            {/* Contact Form */}
+             <section className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+               <h2 className="text-2xl font-semibold text-[var(--navy)]">
+                 Get in Touch
+               </h2>
+ 
+               <p className="mt-4 leading-7 text-gray-600">
+-                We're currently preparing our secure online enquiry portal.
+-                Until then, please contact our executive team or send your
+-                enquiry to our general mailbox, and we'll ensure it reaches the
+-                appropriate team promptly.
++                Send us a message and we&apos;ll route it to the right person on
++                our team. We aim to respond to all enquiries within one
++                business day.
+               </p>
+ 
+-              <div className="mt-8 rounded-xl bg-[var(--gray)] p-6">
+-                <p className="font-medium text-[var(--navy)]">
+-                  Primary Contact
+-                </p>
+-
+-                <p className="mt-2 text-gray-700">info@samnkosi.com</p>
+-
+-                <p className="mt-4 text-sm text-gray-600">
+-                  We aim to respond to all enquiries within one business day.
+-                </p>
++              <div className="mt-8">
++                <ContactForm />
+               </div>
+             </section>
+           </div>
+diff --git a/app/globals.css b/app/globals.css
+index b7dc643..74151e4 100644
+--- a/app/globals.css
++++ b/app/globals.css
+@@ -13,5 +13,14 @@ body {
+   margin: 0;
+   background: var(--background);
+   color: var(--foreground);
+-  font-family: Arial, Helvetica, sans-serif;
++  font-family: var(--font-body), Arial, Helvetica, sans-serif;
++}
++
++h1,
++h2,
++h3,
++h4,
++h5,
++h6 {
++  font-family: var(--font-heading), Arial, Helvetica, sans-serif;
+ }
+diff --git a/app/industries/page.tsx b/app/industries/page.tsx
+index 239a936..65b5355 100644
+--- a/app/industries/page.tsx
++++ b/app/industries/page.tsx
+@@ -44,7 +44,7 @@ export default function IndustriesPage() {
+           <p className="mt-6 max-w-3xl text-lg leading-8 text-gray-600">
+             SAMNKOSI Technology Group partners with organizations across the
+             public and private sectors, delivering secure, scalable technology
+-            solutions tailored to each industry's unique mission.
++            solutions tailored to each industry&apos;s unique mission.
+           </p>
+ 
+           <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+diff --git a/app/layout.tsx b/app/layout.tsx
+index c888d1f..a0829a1 100644
+--- a/app/layout.tsx
++++ b/app/layout.tsx
+@@ -1,6 +1,21 @@
+ import type { Metadata } from "next";
++import { Space_Grotesk, Inter } from "next/font/google";
+ import "./globals.css";
+ 
++const spaceGrotesk = Space_Grotesk({
++  subsets: ["latin"],
++  weight: ["600", "700"],
++  variable: "--font-heading",
++  display: "swap",
++});
++
++const inter = Inter({
++  subsets: ["latin"],
++  weight: ["400", "500"],
++  variable: "--font-body",
++  display: "swap",
++});
++
+ export const metadata: Metadata = {
+   metadataBase: new URL("https://samnkosi.com"),
+ 
+@@ -22,7 +37,7 @@ export const metadata: Metadata = {
+     "Federal Contractor",
+     "Technology Consulting",
+     "SAMNKOSI",
+-    "South Africa",
++    "Maryland",
+   ],
+ 
+   authors: [
+@@ -55,7 +70,11 @@ export default function RootLayout({
+   children: React.ReactNode;
+ }>) {
+   return (
+-    <html lang="en" data-scroll-behavior="smooth">
++    <html
++      lang="en"
++      data-scroll-behavior="smooth"
++      className={`${spaceGrotesk.variable} ${inter.variable}`}
++    >
+       <body>{children}</body>
+     </html>
+   );
+diff --git a/app/leadership/page.tsx b/app/leadership/page.tsx
+index 044abe1..71358d1 100644
+--- a/app/leadership/page.tsx
++++ b/app/leadership/page.tsx
+@@ -1,19 +1,19 @@
+ import Navbar from "@/components/navigation/Navbar";
+ import Footer from "@/components/layout/Footer";
+ import Container from "@/components/layout/Container";
++import { leadership } from "@/config/leadership";
++import { company } from "@/config/company";
+ 
+ const leaders = [
+   {
+-    name: "Ayola Mgqolozana",
+-    title: "Chief Executive Officer",
++    ...leadership[0],
+     bio: "Ayola provides the strategic leadership and executive direction of SAMNKOSI Technology Group. As Chief Executive Officer, he defines the company's vision, cultivates strategic partnerships, and guides its long-term growth. He leads the organization with a focus on innovation, client success, and operational excellence.",
+-    email: "amgqolozana@samnkosi.com",
++    email: company.emails.ceo,
+   },
+   {
+-    name: "Sipho Mkhwanazi",
+-    title: "Chief Operating Officer",
+-    bio: "Sipho oversees the operational execution of the company's strategic objectives. Working under the leadership and direction of the Chief Executive Officer, he is responsible for technology delivery, operational management, process optimization, and organizational performance.",
+-    email: "smkhwanazi@samnkosi.com",
++    ...leadership[1],
++    bio: "Sipho leads technology strategy and engineering delivery for SAMNKOSI Technology Group, spanning cloud architecture, DevSecOps, cybersecurity, and automation. He is responsible for translating the company's strategic objectives into secure, scalable technical solutions for clients.",
++    email: company.emails.engineering,
+   },
+ ];
+ 
+diff --git a/app/page.tsx b/app/page.tsx
+index 8c4708d..ccdf884 100644
+--- a/app/page.tsx
++++ b/app/page.tsx
+@@ -26,7 +26,9 @@ export default function Home() {
+         title="Ready to Strengthen Your Mission?"
+         description="Partner with SAMNKOSI Technology Group to modernize, secure, and transform your organization with trusted technology solutions."
+         primaryText="Contact Us"
++        primaryHref="/contact"
+         secondaryText="Explore Capabilities"
++        secondaryHref="/capabilities"
+       />
+ 
+       <Footer />
+diff --git a/app/sitemap.ts b/app/sitemap.ts
+index 6a1aeb4..95567d0 100644
+--- a/app/sitemap.ts
++++ b/app/sitemap.ts
+@@ -16,6 +16,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
+     {
+       url: `${baseUrl}/industries`,
+     },
++    {
++      url: `${baseUrl}/federal-readiness`,
++    },
+     {
+       url: `${baseUrl}/leadership`,
+     },
+diff --git a/app/styles/theme.css b/app/styles/theme.css
+index 39eb724..b17110d 100644
+--- a/app/styles/theme.css
++++ b/app/styles/theme.css
+@@ -1,12 +1,14 @@
+ :root {
+-  /* Brand Colors */
++  /* Brand Colors — see design-system/Colors.md */
+   --background: #ffffff;
+   --foreground: #2e2e2e;
+ 
+-  --navy: #0b1f3a;
+-  --blue: #1e5aa8;
+-  --gold: #c89b3c;
+-  --gray: #f4f6f8;
++  --navy: #0f2747;
++  --blue: #2563eb;
++  --gold: #c8a24a;
++  --slate: #64748b;
++  --success: #16a34a;
++  --gray: #f5f7fa;
+ 
+   /* Border Radius */
+   --radius-sm: 8px;
+diff --git a/components/forms/ContactForm.tsx b/components/forms/ContactForm.tsx
+new file mode 100644
+index 0000000..631b6ea
+--- /dev/null
++++ b/components/forms/ContactForm.tsx
+@@ -0,0 +1,177 @@
++"use client";
++
++import { useState } from "react";
++import { useForm } from "react-hook-form";
++import { zodResolver } from "@hookform/resolvers/zod";
++import { z } from "zod";
++import Button from "@/components/ui/Button";
++
++const formSchema = z.object({
++  name: z.string().trim().min(2, "Please enter your full name."),
++  email: z.string().trim().email("Please enter a valid email address."),
++  organization: z.string().trim().optional(),
++  message: z.string().trim().min(10, "Please include a short message."),
++  // Honeypot — kept empty by real users, hidden from screen readers/visually.
++  company_website: z.string().max(0).optional(),
++});
++
++type FormValues = z.infer<typeof formSchema>;
++
++type Status = "idle" | "submitting" | "success" | "error";
++
++export default function ContactForm() {
++  const [status, setStatus] = useState<Status>("idle");
++  const [statusMessage, setStatusMessage] = useState<string>("");
++
++  const {
++    register,
++    handleSubmit,
++    reset,
++    formState: { errors },
++  } = useForm<FormValues>({
++    resolver: zodResolver(formSchema),
++  });
++
++  const onSubmit = async (values: FormValues) => {
++    setStatus("submitting");
++    setStatusMessage("");
++
++    try {
++      const response = await fetch("/api/contact", {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify(values),
++      });
++
++      const data = await response.json();
++
++      if (!response.ok) {
++        setStatus("error");
++        setStatusMessage(
++          data.error || "Something went wrong. Please try again."
++        );
++        return;
++      }
++
++      setStatus("success");
++      setStatusMessage(
++        "Thanks — your message has been received. We'll be in touch within one business day."
++      );
++      reset();
++    } catch {
++      setStatus("error");
++      setStatusMessage(
++        "Something went wrong sending your message. Please try again or email us directly."
++      );
++    }
++  };
++
++  if (status === "success") {
++    return (
++      <div
++        role="status"
++        className="rounded-xl bg-[var(--gray)] p-6 text-gray-700"
++      >
++        {statusMessage}
++      </div>
++    );
++  }
++
++  return (
++    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
++      {/* Honeypot field, hidden from real users */}
++      <div className="hidden" aria-hidden="true">
++        <label htmlFor="company_website">Leave this field empty</label>
++        <input
++          id="company_website"
++          type="text"
++          tabIndex={-1}
++          autoComplete="off"
++          {...register("company_website")}
++        />
++      </div>
++
++      <div>
++        <label
++          htmlFor="name"
++          className="block text-sm font-medium text-gray-700"
++        >
++          Full name
++        </label>
++        <input
++          id="name"
++          type="text"
++          autoComplete="name"
++          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-[var(--blue)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
++          {...register("name")}
++        />
++        {errors.name && (
++          <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
++        )}
++      </div>
++
++      <div>
++        <label
++          htmlFor="email"
++          className="block text-sm font-medium text-gray-700"
++        >
++          Email
++        </label>
++        <input
++          id="email"
++          type="email"
++          autoComplete="email"
++          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-[var(--blue)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
++          {...register("email")}
++        />
++        {errors.email && (
++          <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
++        )}
++      </div>
++
++      <div>
++        <label
++          htmlFor="organization"
++          className="block text-sm font-medium text-gray-700"
++        >
++          Organization <span className="text-gray-400">(optional)</span>
++        </label>
++        <input
++          id="organization"
++          type="text"
++          autoComplete="organization"
++          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-[var(--blue)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
++          {...register("organization")}
++        />
++      </div>
++
++      <div>
++        <label
++          htmlFor="message"
++          className="block text-sm font-medium text-gray-700"
++        >
++          Message
++        </label>
++        <textarea
++          id="message"
++          rows={5}
++          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-[var(--blue)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
++          {...register("message")}
++        />
++        {errors.message && (
++          <p className="mt-1 text-sm text-red-600">{errors.message.message}</p>
++        )}
++      </div>
++
++      {status === "error" && (
++        <p role="alert" className="text-sm text-red-600">
++          {statusMessage}
++        </p>
++      )}
++
++      <Button type="submit" disabled={status === "submitting"}>
++        {status === "submitting" ? "Sending…" : "Send Message"}
++      </Button>
++    </form>
++  );
++}
+diff --git a/components/icons/SocialIcons.tsx b/components/icons/SocialIcons.tsx
+new file mode 100644
+index 0000000..3c1d15e
+--- /dev/null
++++ b/components/icons/SocialIcons.tsx
+@@ -0,0 +1,49 @@
++type IconProps = {
++  size?: number;
++  className?: string;
++};
++
++export function LinkedInIcon({ size = 20, className }: IconProps) {
++  return (
++    <svg
++      width={size}
++      height={size}
++      viewBox="0 0 24 24"
++      fill="currentColor"
++      className={className}
++      aria-hidden="true"
++    >
++      <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.61 0 4.28 2.38 4.28 5.47v6.27zM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45z" />
++    </svg>
++  );
++}
++
++export function XIcon({ size = 20, className }: IconProps) {
++  return (
++    <svg
++      width={size}
++      height={size}
++      viewBox="0 0 24 24"
++      fill="currentColor"
++      className={className}
++      aria-hidden="true"
++    >
++      <path d="M13.6 10.62 20.4 3h-1.6l-5.9 6.62L8.2 3H3l7.13 10.06L3 21h1.6l6.24-7 5 7H21l-7.4-10.38Zm-2.2 2.47-.72-1L5.1 4.2h2.46l4.65 6.5.72 1 6.05 8.46h-2.46l-4.92-6.87Z" />
++    </svg>
++  );
++}
++
++export function GitHubIcon({ size = 20, className }: IconProps) {
++  return (
++    <svg
++      width={size}
++      height={size}
++      viewBox="0 0 24 24"
++      fill="currentColor"
++      className={className}
++      aria-hidden="true"
++    >
++      <path d="M12 2C6.48 2 2 6.58 2 12.2c0 4.49 2.87 8.3 6.84 9.65.5.1.68-.22.68-.49 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.9-.63.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.72 0 0 .84-.28 2.75 1.05a9.3 9.3 0 0 1 5.01 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.46.1 2.72.64.72 1.03 1.63 1.03 2.75 0 3.94-2.35 4.8-4.58 5.06.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.81 0 .27.18.6.69.49A10.02 10.02 0 0 0 22 12.2C22 6.58 17.52 2 12 2Z" />
++    </svg>
++  );
++}
+diff --git a/components/layout/Footer.tsx b/components/layout/Footer.tsx
+index a50076c..cc4f504 100644
+--- a/components/layout/Footer.tsx
++++ b/components/layout/Footer.tsx
+@@ -1,8 +1,16 @@
+ import Link from "next/link";
++import { LinkedInIcon, XIcon, GitHubIcon } from "@/components/icons/SocialIcons";
+ import Container from "@/components/layout/Container";
+ import Brand from "@/components/layout/Brand";
+ import { company } from "@/config/company";
+ import { navigation } from "@/config/navigation";
++import { social } from "@/config/social";
++
++const socialLinks = [
++  { href: social.linkedin, label: "LinkedIn", icon: LinkedInIcon },
++  { href: social.x, label: "X", icon: XIcon },
++  { href: social.github, label: "GitHub", icon: GitHubIcon },
++].filter((link) => link.href);
+ 
+ export default function Footer() {
+   const year = new Date().getFullYear();
+@@ -69,6 +77,23 @@ export default function Footer() {
+                 </a>
+               </li>
+             </ul>
++
++            {socialLinks.length > 0 && (
++              <div className="mt-6 flex gap-4">
++                {socialLinks.map(({ href, label, icon: Icon }) => (
++                  <a
++                    key={label}
++                    href={href}
++                    target="_blank"
++                    rel="noopener noreferrer"
++                    aria-label={label}
++                    className="text-gray-300 transition hover:text-white"
++                  >
++                    <Icon size={20} />
++                  </a>
++                ))}
++              </div>
++            )}
+           </div>
+         </div>
+ 
+diff --git a/components/navigation/MobileMenu.tsx b/components/navigation/MobileMenu.tsx
+index 4e5cbd8..c2203bf 100644
+--- a/components/navigation/MobileMenu.tsx
++++ b/components/navigation/MobileMenu.tsx
+@@ -30,7 +30,9 @@ export default function MobileMenu() {
+             ))}
+ 
+             <div className="mt-6">
+-              <Button>Contact Us</Button>
++              <Button href="/contact" onClick={() => setOpen(false)}>
++                Contact Us
++              </Button>
+             </div>
+           </nav>
+         </div>
+diff --git a/components/navigation/Navbar.tsx b/components/navigation/Navbar.tsx
+index 117b22c..067896a 100644
+--- a/components/navigation/Navbar.tsx
++++ b/components/navigation/Navbar.tsx
+@@ -25,7 +25,7 @@ export default function Navbar() {
+               </Link>
+             ))}
+ 
+-            <Button>Contact Us</Button>
++            <Button href="/contact">Contact Us</Button>
+           </nav>
+ 
+           {/* Mobile Navigation */}
+diff --git a/components/sections/Capabilities.tsx b/components/sections/Capabilities.tsx
+index 9fcaa87..ad3a9dd 100644
+--- a/components/sections/Capabilities.tsx
++++ b/components/sections/Capabilities.tsx
+@@ -2,39 +2,7 @@ import Container from "@/components/layout/Container";
+ import SectionHeader from "@/components/ui/SectionHeader";
+ import Card from "@/components/ui/Card";
+ import FadeIn from "@/components/ui/FadeIn";
+-
+-const capabilities = [
+-  {
+-    title: "Cybersecurity",
+-    description:
+-      "Security assessments, risk management, Zero Trust, compliance, and cyber resilience.",
+-  },
+-  {
+-    title: "Cloud Engineering",
+-    description:
+-      "Cloud architecture, migration, modernization, and infrastructure optimization.",
+-  },
+-  {
+-    title: "DevSecOps",
+-    description:
+-      "Secure CI/CD pipelines, automation, Infrastructure as Code, and continuous delivery.",
+-  },
+-  {
+-    title: "Enterprise IT",
+-    description:
+-      "Modern IT infrastructure, endpoint management, networking, and systems administration.",
+-  },
+-  {
+-    title: "AI & Automation",
+-    description:
+-      "Workflow automation, AI integration, process optimization, and intelligent solutions.",
+-  },
+-  {
+-    title: "Program Management",
+-    description:
+-      "Project planning, governance, stakeholder engagement, and operational excellence.",
+-  },
+-];
++import { capabilities } from "@/config/capabilities";
+ 
+ export default function Capabilities() {
+   return (
+diff --git a/components/sections/Hero.tsx b/components/sections/Hero.tsx
+index 165de1e..1c89bcf 100644
+--- a/components/sections/Hero.tsx
++++ b/components/sections/Hero.tsx
+@@ -62,9 +62,11 @@ export default function Hero() {
+             </p>
+ 
+             <div className="mt-10 flex flex-wrap gap-4">
+-              <Button>Explore Capabilities</Button>
++              <Button href="/capabilities">{hero.primaryButton}</Button>
+ 
+-              <Button variant="secondary">Contact Us</Button>
++              <Button href="/contact" variant="secondary">
++                {hero.secondaryButton}
++              </Button>
+             </div>
+ 
+             <div className="mt-14 grid grid-cols-2 gap-5">
+diff --git a/components/sections/LeadershipPreview.tsx b/components/sections/LeadershipPreview.tsx
+index c908fcc..22c6e09 100644
+--- a/components/sections/LeadershipPreview.tsx
++++ b/components/sections/LeadershipPreview.tsx
+@@ -67,7 +67,7 @@ export default function LeadershipPreview() {
+         </div>
+ 
+         <div className="mt-12">
+-          <Button>Meet Our Leadership Team</Button>
++          <Button href="/leadership">Meet Our Leadership Team</Button>
+         </div>
+       </Container>
+     </section>
+diff --git a/components/ui/Button.tsx b/components/ui/Button.tsx
+index ae38330..3e0beec 100644
+--- a/components/ui/Button.tsx
++++ b/components/ui/Button.tsx
+@@ -1,9 +1,32 @@
+-type ButtonProps = {
+-  children: React.ReactNode;
++import Link from "next/link";
++import { ButtonHTMLAttributes, ReactNode } from "react";
++
++type CommonProps = {
++  children: ReactNode;
+   variant?: "primary" | "secondary";
++  className?: string;
+ };
+ 
+-export default function Button({ children, variant = "primary" }: ButtonProps) {
++type ButtonAsButton = CommonProps &
++  Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className"> & {
++    href?: undefined;
++  };
++
++type ButtonAsLink = CommonProps & {
++  href: string;
++  target?: string;
++  rel?: string;
++  onClick?: () => void;
++};
++
++type ButtonProps = ButtonAsButton | ButtonAsLink;
++
++export default function Button({
++  children,
++  variant = "primary",
++  className = "",
++  ...props
++}: ButtonProps) {
+   const base =
+     "inline-flex items-center justify-center rounded-lg px-6 py-3 text-sm font-semibold transition-colors";
+ 
+@@ -12,5 +35,29 @@ export default function Button({ children, variant = "primary" }: ButtonProps) {
+       ? "bg-[var(--navy)] text-white hover:bg-[#16335e]"
+       : "border border-[var(--navy)] text-[var(--navy)] hover:bg-gray-100";
+ 
+-  return <button className={`${base} ${styles}`}>{children}</button>;
++  const classes = `${base} ${styles} ${className}`;
++
++  if ("href" in props && props.href) {
++    const { href, target, rel, onClick } = props;
++
++    return (
++      <Link
++        href={href}
++        className={classes}
++        target={target}
++        rel={target === "_blank" ? rel ?? "noopener noreferrer" : rel}
++        onClick={onClick}
++      >
++        {children}
++      </Link>
++    );
++  }
++
++  const buttonProps = props as ButtonHTMLAttributes<HTMLButtonElement>;
++
++  return (
++    <button className={classes} type={buttonProps.type ?? "button"} {...buttonProps}>
++      {children}
++    </button>
++  );
+ }
+diff --git a/components/ui/CTA.tsx b/components/ui/CTA.tsx
+index 387fc10..07e4d90 100644
+--- a/components/ui/CTA.tsx
++++ b/components/ui/CTA.tsx
+@@ -5,14 +5,18 @@ type CTAProps = {
+   title: string;
+   description: string;
+   primaryText?: string;
++  primaryHref?: string;
+   secondaryText?: string;
++  secondaryHref?: string;
+ };
+ 
+ export default function CTA({
+   title,
+   description,
+   primaryText = "Contact Us",
++  primaryHref = "/contact",
+   secondaryText = "Learn More",
++  secondaryHref = "/capabilities",
+ }: CTAProps) {
+   return (
+     <section className="bg-[var(--navy)] py-24 text-white">
+@@ -23,9 +27,11 @@ export default function CTA({
+           <p className="mt-6 text-lg leading-8 text-gray-300">{description}</p>
+ 
+           <div className="mt-10 flex flex-wrap justify-center gap-4">
+-            <Button>{primaryText}</Button>
++            <Button href={primaryHref}>{primaryText}</Button>
+ 
+-            <Button variant="secondary">{secondaryText}</Button>
++            <Button href={secondaryHref} variant="secondary">
++              {secondaryText}
++            </Button>
+           </div>
+         </div>
+       </Container>
+diff --git a/config/capabilities.ts b/config/capabilities.ts
+index e69de29..9bc983c 100644
+--- a/config/capabilities.ts
++++ b/config/capabilities.ts
+@@ -0,0 +1,32 @@
++export const capabilities = [
++  {
++    title: "Cybersecurity",
++    description:
++      "Security assessments, risk management, Zero Trust, compliance, and cyber resilience.",
++  },
++  {
++    title: "Cloud Engineering",
++    description:
++      "Cloud architecture, migration, modernization, and infrastructure optimization.",
++  },
++  {
++    title: "DevSecOps",
++    description:
++      "Secure CI/CD pipelines, automation, Infrastructure as Code, and continuous delivery.",
++  },
++  {
++    title: "Enterprise IT",
++    description:
++      "Modern IT infrastructure, endpoint management, networking, and systems administration.",
++  },
++  {
++    title: "AI & Automation",
++    description:
++      "Workflow automation, AI integration, process optimization, and intelligent solutions.",
++  },
++  {
++    title: "Program Management",
++    description:
++      "Project planning, governance, stakeholder engagement, and operational excellence.",
++  },
++];
+diff --git a/config/navigation.ts b/config/navigation.ts
+index 29bf19a..3cc2242 100644
+--- a/config/navigation.ts
++++ b/config/navigation.ts
+@@ -7,6 +7,10 @@ export const navigation = [
+     name: "Industries",
+     href: "/industries",
+   },
++  {
++    name: "Federal Readiness",
++    href: "/federal-readiness",
++  },
+   {
+     name: "About",
+     href: "/about",
+diff --git a/config/social.ts b/config/social.ts
+index e69de29..240ec01 100644
+--- a/config/social.ts
++++ b/config/social.ts
+@@ -0,0 +1,5 @@
++export const social = {
++  linkedin: "", // e.g. "https://www.linkedin.com/company/samnkosi-technology-group"
++  x: "",
++  github: "",
++};
+diff --git a/package-lock.json b/package-lock.json
+index 5f09e2b..415e186 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -633,9 +633,6 @@
+       "cpu": [
+         "arm"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -652,9 +649,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -671,9 +665,6 @@
+       "cpu": [
+         "ppc64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -690,9 +681,6 @@
+       "cpu": [
+         "riscv64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -709,9 +697,6 @@
+       "cpu": [
+         "s390x"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -728,9 +713,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -747,9 +729,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -766,9 +745,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -785,9 +761,6 @@
+       "cpu": [
+         "arm"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -810,9 +783,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -835,9 +805,6 @@
+       "cpu": [
+         "ppc64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -860,9 +827,6 @@
+       "cpu": [
+         "riscv64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -885,9 +849,6 @@
+       "cpu": [
+         "s390x"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -910,9 +871,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -935,9 +893,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -960,9 +915,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -1178,9 +1130,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1197,9 +1146,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1216,9 +1162,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1235,9 +1178,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1482,9 +1422,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1502,9 +1439,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1522,9 +1456,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1542,9 +1473,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2095,9 +2023,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2112,9 +2037,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2129,9 +2051,6 @@
+         "loong64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2146,9 +2065,6 @@
+         "loong64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2163,9 +2079,6 @@
+         "ppc64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2180,9 +2093,6 @@
+         "riscv64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2197,9 +2107,6 @@
+         "riscv64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2214,9 +2121,6 @@
+         "s390x"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2231,9 +2135,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2248,9 +2149,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -4983,9 +4881,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MPL-2.0",
+       "optional": true,
+       "os": [
+@@ -5007,9 +4902,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MPL-2.0",
+       "optional": true,
+       "os": [
+@@ -5031,9 +4923,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MPL-2.0",
+       "optional": true,
+       "os": [
+@@ -5055,9 +4944,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MPL-2.0",
+       "optional": true,
+       "os": [
+-- 
+2.43.0
+

@@ -44,7 +44,7 @@ export default function IndustriesPage() {
           <p className="mt-6 max-w-3xl text-lg leading-8 text-gray-600">
             SAMNKOSI Technology Group partners with organizations across the
             public and private sectors, delivering secure, scalable technology
-            solutions tailored to each industry's unique mission.
+            solutions tailored to each industry&apos;s unique mission.
           </p>
 
           <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">

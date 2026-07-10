@@ -26,7 +26,9 @@ export default function Home() {
         title="Ready to Strengthen Your Mission?"
         description="Partner with SAMNKOSI Technology Group to modernize, secure, and transform your organization with trusted technology solutions."
         primaryText="Contact Us"
+        primaryHref="/contact"
         secondaryText="Explore Capabilities"
+        secondaryHref="/capabilities"
       />
 
       <Footer />

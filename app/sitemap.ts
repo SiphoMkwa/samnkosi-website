@@ -17,6 +17,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${baseUrl}/industries`,
     },
     {
+      url: `${baseUrl}/federal-readiness`,
+    },
+    {
       url: `${baseUrl}/leadership`,
     },
     {
