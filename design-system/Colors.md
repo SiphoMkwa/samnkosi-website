@@ -2,23 +2,23 @@
 
 ## Primary
 
-Federal Navy — #0F2747
+Federal Navy — #0B1D3A
 
-Mission Blue — #2563EB
+Mission Blue — #1E40AF
 
 White — #FFFFFF
 
-Light Gray — #F5F7FA
+Light Gray — #F1F5F9
 
 ---
 
 ## Supporting
 
+Accent Blue — #3B82F6
+
 Slate — #64748B
 
 Success Green — #16A34A
-
-Gold Accent — #C8A24A
 
 ---
 
@@ -29,6 +29,7 @@ Federal Navy:
 - Navigation
 - Headings
 - Footer
+- Logo mark
 
 Mission Blue:
 
@@ -36,6 +37,11 @@ Mission Blue:
 - Links
 - Icons
 - Highlights
+
+Accent Blue:
+
+- Logo mark highlight
+- Secondary emphasis
 
 White:
 
@@ -46,9 +52,3 @@ Light Gray:
 - Alternate sections
 - Cards
 - Icon backgrounds
-
-Gold Accent:
-
-- Certifications
-- Awards
-- Special recognition

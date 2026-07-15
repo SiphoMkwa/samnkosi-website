@@ -11,6 +11,11 @@ export const company = {
     engineering: "smkhwanazi@samnkosi.com",
   },
 
+  phone: {
+    display: "(240) 571-2848",
+    href: "+12405712848",
+  },
+
   tagline: "Engineering Trust. Delivering Mission Success.",
 
   mission:

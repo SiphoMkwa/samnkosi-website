@@ -1,13 +1,14 @@
 # Typography
 
-## Headings
+## Brand / Headings
 
 Font:
-Space Grotesk
+Montserrat
 
 Weights:
-600
-700
+500 (Medium)
+600 (SemiBold)
+700 (Bold)
 
 ---
 

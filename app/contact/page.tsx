@@ -73,6 +73,21 @@ export default function ContactPage() {
 
                 <div>
                   <h3 className="text-lg font-semibold text-[var(--navy)]">
+                    Phone
+                  </h3>
+
+                  <p className="text-gray-600">
+                    <a
+                      href="tel:+12405712848"
+                      className="transition hover:text-[var(--navy)]"
+                    >
+                      (240) 571-2848
+                    </a>
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-[var(--navy)]">
                     Website
                   </h3>
 

@@ -3,12 +3,12 @@
   --background: #ffffff;
   --foreground: #2e2e2e;
 
-  --navy: #0f2747;
-  --blue: #2563eb;
-  --gold: #c8a24a;
+  --navy: #0b1d3a;
+  --blue: #1e40af;
+  --blue-light: #3b82f6;
   --slate: #64748b;
   --success: #16a34a;
-  --gray: #f5f7fa;
+  --gray: #f1f5f9;
 
   /* Border Radius */
   --radius-sm: 8px;
