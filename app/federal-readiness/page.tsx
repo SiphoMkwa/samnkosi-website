@@ -1,6 +1,7 @@
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/layout/Container";
+import { naicsCodes } from "@/config/naics";
 
 export default function FederalReadinessPage() {
   return (
@@ -16,7 +17,8 @@ export default function FederalReadinessPage() {
           <p className="mt-6 max-w-3xl text-lg leading-8 text-gray-600">
             SAMNKOSI Technology Group is building the capabilities, processes,
             and governance required to support government clients with secure,
-            compliant, and mission-focused technology services.
+            compliant, and mission-focused technology and professional
+            services.
           </p>
 
           <div className="mt-12 space-y-8">
@@ -35,16 +37,42 @@ export default function FederalReadinessPage() {
 
             <section>
               <h2 className="text-2xl font-semibold text-[var(--navy)]">
-                Areas of Focus
+                Areas of Focus &amp; NAICS Codes
               </h2>
 
-              <ul className="mt-4 list-disc space-y-3 pl-6 text-gray-600">
-                <li>Cybersecurity and Risk Management</li>
-                <li>Cloud Engineering</li>
-                <li>DevSecOps Practices</li>
-                <li>Enterprise IT Modernization</li>
-                <li>Program and Project Management</li>
-              </ul>
+              <p className="mt-4 leading-7 text-gray-600">
+                Our core capabilities are anchored in secure technology, with
+                additional NAICS registrations that allow us to pursue a
+                broader range of federal, state, and local contract
+                opportunities as we grow.
+              </p>
+
+              <div className="mt-8 space-y-6">
+                {naicsCodes.map((item) => (
+                  <div
+                    key={item.code}
+                    className="rounded-xl border border-gray-200 p-6"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <h3 className="text-lg font-semibold text-[var(--navy)]">
+                        {item.focus}
+                      </h3>
+
+                      <span className="inline-flex items-center rounded-full bg-[var(--gray)] px-3 py-1 text-sm font-semibold text-[var(--blue)]">
+                        NAICS {item.code}
+                      </span>
+                    </div>
+
+                    <p className="mt-2 text-sm font-medium text-gray-500">
+                      {item.label}
+                    </p>
+
+                    <p className="mt-3 leading-7 text-gray-600">
+                      {item.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </section>
           </div>
         </Container>

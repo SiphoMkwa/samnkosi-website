@@ -1,6 +1,7 @@
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/layout/Container";
+import { company } from "@/config/company";
 
 export default function AboutPage() {
   return (
@@ -14,9 +15,7 @@ export default function AboutPage() {
           </h1>
 
           <p className="mt-8 max-w-3xl text-lg leading-8 text-gray-600">
-            SAMNKOSI Technology Group is a technology consulting and engineering
-            company focused on delivering secure, scalable, and mission-driven
-            solutions for government, education, and commercial organizations.
+            {company.about}
           </p>
 
           <div className="mt-12 space-y-8">
@@ -25,11 +24,7 @@ export default function AboutPage() {
                 Our Mission
               </h2>
 
-              <p className="mt-4 text-gray-600 leading-7">
-                To engineer trust through secure technology, operational
-                excellence, and innovative solutions that help our clients
-                achieve their missions.
-              </p>
+              <p className="mt-4 text-gray-600 leading-7">{company.mission}</p>
             </section>
 
             <section>
@@ -37,11 +32,7 @@ export default function AboutPage() {
                 Our Vision
               </h2>
 
-              <p className="mt-4 text-gray-600 leading-7">
-                To become a trusted technology partner recognized for integrity,
-                technical excellence, and lasting impact across the public and
-                private sectors.
-              </p>
+              <p className="mt-4 text-gray-600 leading-7">{company.vision}</p>
             </section>
           </div>
         </Container>
