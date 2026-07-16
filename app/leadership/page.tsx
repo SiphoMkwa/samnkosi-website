@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 const leaders = [
   {
     ...leadership[0],
-    bio: "Ayola provides the strategic leadership and executive direction of SAMNKOSI Technology Group. As Chief Executive Officer, he defines the company's vision, cultivates strategic partnerships, and guides its long-term growth. He leads the organization with a focus on innovation, client success, and operational excellence.",
+    bio: "Ayola provides the strategic leadership and executive direction of SAMNKOSI Technology Group. As Chief Executive Officer, she defines the company's vision, cultivates strategic partnerships, and guides its long-term growth. She leads the organization with a focus on innovation, client success, and operational excellence.",
     email: company.emails.ceo,
   },
   {
