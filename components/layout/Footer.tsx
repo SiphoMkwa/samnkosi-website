@@ -21,7 +21,7 @@ export default function Footer() {
         <div className="grid gap-12 py-16 lg:grid-cols-3">
           {/* Company */}
           <div>
-            <Brand />
+            <Brand variant="dark" />
 
             <p className="mt-6 max-w-sm leading-7 text-gray-300">
               {company.tagline}
