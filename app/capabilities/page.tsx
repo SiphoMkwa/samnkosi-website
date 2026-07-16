@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/layout/Container";
 import { capabilities } from "@/config/capabilities";
+
+export const metadata: Metadata = {
+  title: "Capabilities",
+  description:
+    "Cybersecurity, cloud engineering, DevSecOps, and enterprise IT modernization capabilities from SAMNKOSI Technology Group, built for federal, state, local, and commercial clients.",
+  alternates: { canonical: "/capabilities" },
+};
 
 export default function CapabilitiesPage() {
   return (

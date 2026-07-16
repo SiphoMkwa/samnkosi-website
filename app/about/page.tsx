@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/layout/Container";
 import { company } from "@/config/company";
+
+export const metadata: Metadata = {
+  title: "About Us",
+  description:
+    "SAMNKOSI Technology Group is a Maryland based government contractor delivering secure technology, cybersecurity, and cloud engineering, with growing capabilities in program management and professional services.",
+  alternates: { canonical: "/about" },
+};
 
 export default function AboutPage() {
   return (

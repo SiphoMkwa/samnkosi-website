@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/layout/Container";
 import ContactForm from "@/components/forms/ContactForm";
+
+export const metadata: Metadata = {
+  title: "Contact Us",
+  description:
+    "Get in touch with SAMNKOSI Technology Group to discuss a technology initiative, capability statement request, or partnership opportunity.",
+  alternates: { canonical: "/contact" },
+};
 
 export default function ContactPage() {
   return (

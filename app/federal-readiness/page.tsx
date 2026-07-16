@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/layout/Container";
 import { naicsCodes } from "@/config/naics";
+
+export const metadata: Metadata = {
+  title: "Federal Readiness",
+  description:
+    "SAMNKOSI Technology Group's federal contracting readiness, core NAICS codes, and areas of focus spanning cybersecurity, cloud engineering, and professional services.",
+  alternates: { canonical: "/federal-readiness" },
+};
 
 export default function FederalReadinessPage() {
   return (

@@ -1,6 +1,14 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/layout/Container";
+
+export const metadata: Metadata = {
+  title: "Industries We Serve",
+  description:
+    "SAMNKOSI Technology Group supports federal, state, and local government, education, and commercial organizations with secure, mission-focused technology solutions.",
+  alternates: { canonical: "/industries" },
+};
 
 const industries = [
   {

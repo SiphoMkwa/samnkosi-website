@@ -1,8 +1,16 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/layout/Container";
 import { leadership } from "@/config/leadership";
 import { company } from "@/config/company";
+
+export const metadata: Metadata = {
+  title: "Leadership",
+  description:
+    "Meet the leadership team of SAMNKOSI Technology Group, guiding the company's strategy, technology delivery, and client relationships.",
+  alternates: { canonical: "/leadership" },
+};
 
 const leaders = [
   {

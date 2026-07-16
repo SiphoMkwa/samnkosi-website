@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Montserrat, Inter } from "next/font/google";
 import "./globals.css";
+import { company } from "@/config/company";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -50,6 +51,10 @@ export const metadata: Metadata = {
 
   publisher: "SAMNKOSI Technology Group",
 
+  alternates: {
+    canonical: "/",
+  },
+
   openGraph: {
     title: "SAMNKOSI Technology Group",
     description: "Engineering Trust. Delivering Mission Success.",
@@ -61,6 +66,44 @@ export const metadata: Metadata = {
     locale: "en_US",
 
     type: "website",
+
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "SAMNKOSI Technology Group",
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "SAMNKOSI Technology Group",
+    description: "Engineering Trust. Delivering Mission Success.",
+    images: ["/og-image.png"],
+  },
+};
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "SAMNKOSI Technology Group",
+  alternateName: "SAMNKOSI",
+  url: "https://samnkosi.com",
+  logo: "https://samnkosi.com/logos/icon.png",
+  description:
+    "SAMNKOSI Technology Group is a Maryland based government contractor delivering secure technology, cybersecurity, cloud engineering, and professional services for federal, state, local, and commercial organizations.",
+  address: {
+    "@type": "PostalAddress",
+    addressRegion: "MD",
+    addressCountry: "US",
+  },
+  contactPoint: {
+    "@type": "ContactPoint",
+    telephone: company.phone.href,
+    contactType: "customer service",
+    email: company.emails.general,
   },
 };
 
@@ -75,6 +118,13 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
       className={`${montserrat.variable} ${inter.variable}`}
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+      </head>
+
       <body>{children}</body>
     </html>
   );
