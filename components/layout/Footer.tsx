@@ -5,12 +5,17 @@ import Brand from "@/components/layout/Brand";
 import { company } from "@/config/company";
 import { navigation } from "@/config/navigation";
 import { social } from "@/config/social";
+import { certifications } from "@/config/certifications";
 
 const socialLinks = [
   { href: social.linkedin, label: "LinkedIn", icon: LinkedInIcon },
   { href: social.x, label: "X", icon: XIcon },
   { href: social.github, label: "GitHub", icon: GitHubIcon },
 ].filter((link) => link.href);
+
+const activeCertifications = certifications.filter(
+  (cert) => cert.status === "active",
+);
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -32,6 +37,21 @@ export default function Footer() {
               government, educational institutions, and commercial
               organizations.
             </p>
+
+            {activeCertifications.length > 0 && (
+              <div className="mt-6 flex flex-wrap gap-2">
+                {activeCertifications.map((cert) => (
+                  <Link
+                    key={cert.abbreviation}
+                    href="/federal-readiness"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-gray-300 transition hover:border-white/20 hover:text-white"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                    {cert.abbreviation}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Navigation */}
