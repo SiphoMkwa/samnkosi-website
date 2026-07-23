@@ -55,6 +55,10 @@ export const metadata: Metadata = {
     canonical: "/",
   },
 
+  verification: {
+    google: "q-SfHiEr5ju8RkXqHMEMWdtNzEFSC51Hv0_7jUNmNyM",
+  },
+
   openGraph: {
     title: "SAMNKOSI Technology Group",
     description: "Engineering Trust. Delivering Mission Success.",
