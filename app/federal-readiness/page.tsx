@@ -3,6 +3,7 @@ import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/layout/Container";
 import { naicsCodes } from "@/config/naics";
+import { certifications } from "@/config/certifications";
 
 export const metadata: Metadata = {
   title: "Federal Readiness",
@@ -41,6 +42,51 @@ export default function FederalReadinessPage() {
                 organizations while adhering to recognized industry standards
                 and best practices.
               </p>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-semibold text-[var(--navy)]">
+                Certifications
+              </h2>
+
+              <p className="mt-4 leading-7 text-gray-600">
+                We hold state-level small business certifications and are
+                actively pursuing federal certification to expand the
+                contract vehicles we&apos;re eligible to pursue.
+              </p>
+
+              <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {certifications.map((cert) => (
+                  <div
+                    key={cert.abbreviation}
+                    className="rounded-xl border border-gray-200 p-6"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <span className="text-lg font-semibold text-[var(--navy)]">
+                        {cert.abbreviation}
+                      </span>
+
+                      {cert.status === "active" ? (
+                        <span className="inline-flex items-center rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+                          Certified
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full bg-[var(--gray)] px-3 py-1 text-xs font-semibold text-[var(--blue)]">
+                          In Progress
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="mt-3 leading-6 text-gray-600">
+                      {cert.name}
+                    </p>
+
+                    <p className="mt-2 text-sm font-medium text-gray-500">
+                      {cert.issuer}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </section>
 
             <section>
