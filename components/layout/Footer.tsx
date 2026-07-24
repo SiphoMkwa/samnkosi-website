@@ -126,8 +126,19 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-white/10 py-6 text-sm text-gray-400">
-          © {year} {company.name}. All rights reserved.
+        <div className="flex flex-col gap-4 border-t border-white/10 py-6 text-sm text-gray-400 sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            © {year} {company.name}. All rights reserved.
+          </p>
+
+          <div className="flex gap-6">
+            <Link href="/terms" className="transition hover:text-white">
+              Terms of Service
+            </Link>
+            <Link href="/privacy" className="transition hover:text-white">
+              Privacy Policy
+            </Link>
+          </div>
         </div>
       </Container>
     </footer>
