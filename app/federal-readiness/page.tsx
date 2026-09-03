@@ -8,7 +8,7 @@ import { certifications } from "@/config/certifications";
 export const metadata: Metadata = {
   title: "Federal Readiness",
   description:
-    "SAMNKOSI Technology Group's federal contracting readiness, core NAICS codes, and areas of focus spanning cybersecurity, cloud engineering, and professional services.",
+    "SAMNKOSI Technology Group's federal contracting readiness, active state certifications, cleared personnel, core NAICS codes, and areas of focus spanning cybersecurity, cloud engineering, and professional services.",
   alternates: { canonical: "/federal-readiness" },
 };
 
@@ -87,6 +87,19 @@ export default function FederalReadinessPage() {
                   </div>
                 ))}
               </div>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-semibold text-[var(--navy)]">
+                Security Clearance
+              </h2>
+
+              <p className="mt-4 leading-7 text-gray-600">
+                Our team includes personnel with an active federal security
+                clearance, positioning SAMNKOSI to support engagements
+                involving classified or controlled unclassified information
+                (CUI) as contract requirements dictate.
+              </p>
             </section>
 
             <section>
