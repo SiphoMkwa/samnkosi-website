@@ -3,10 +3,26 @@ import { z } from "zod";
 import { company } from "@/config/company";
 
 const contactSchema = z.object({
-  name: z.string().trim().min(2, "Please enter your full name."),
-  email: z.string().trim().email("Please enter a valid email address."),
-  organization: z.string().trim().optional(),
-  message: z.string().trim().min(10, "Please include a short message."),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Please enter your full name.")
+    .max(100, "Please keep your name under 100 characters."),
+  email: z
+    .string()
+    .trim()
+    .email("Please enter a valid email address.")
+    .max(254, "Please enter a valid email address."),
+  organization: z
+    .string()
+    .trim()
+    .max(200, "Please keep your organization under 200 characters.")
+    .optional(),
+  message: z
+    .string()
+    .trim()
+    .min(10, "Please include a short message.")
+    .max(5000, "Please keep your message under 5,000 characters."),
   // Honeypot field — real users never fill this in; bots usually do.
   company_website: z.string().max(0).optional(),
 });
@@ -35,24 +51,25 @@ export async function POST(request: NextRequest) {
   const { name, email, organization, message } = parsed.data;
 
   const resendApiKey = process.env.RESEND_API_KEY;
+  const fromAddress =
+    process.env.CONTACT_FROM_EMAIL || "SAMNKOSI Website <onboarding@resend.dev>";
   const toAddress = process.env.CONTACT_TO_EMAIL || company.emails.general;
 
   if (!resendApiKey) {
-    // No email provider configured yet. Log server-side so the submission
-    // isn't silently lost during development, but let the caller know
-    // delivery isn't actually wired up.
-    console.warn(
-      "[contact] RESEND_API_KEY not set — submission received but not emailed:",
-      { name, email, organization, message }
+    // Fail closed: never report a successful submission when no delivery
+    // provider is configured. Do not log the visitor's message or PII.
+    console.error(
+      "[contact] RESEND_API_KEY is not configured; refusing contact submission."
     );
 
     return NextResponse.json(
       {
-        ok: true,
+        ok: false,
         delivered: false,
-        note: "Submission logged, but no email provider is configured yet.",
+        error:
+          "Contact delivery is temporarily unavailable. Please email us directly.",
       },
-      { status: 200 }
+      { status: 503 }
     );
   }
 
@@ -60,15 +77,25 @@ export async function POST(request: NextRequest) {
     const resendResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${resendApiKey}`,
+        Authorization: "Bearer " + resendApiKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: process.env.CONTACT_FROM_EMAIL || "SAMNKOSI Website <onboarding@resend.dev>",
+        from: fromAddress,
         to: [toAddress],
         reply_to: email,
-        subject: `New enquiry from ${name}${organization ? ` (${organization})` : ""}`,
-        text: `Name: ${name}\nEmail: ${email}\nOrganization: ${organization || "—"}\n\nMessage:\n${message}`,
+        subject:
+          "New enquiry from " +
+          name +
+          (organization ? " (" + organization + ")" : ""),
+        text: [
+          "Name: " + name,
+          "Email: " + email,
+          "Organization: " + (organization || "—"),
+          "",
+          "Message:",
+          message,
+        ].join(String.fromCharCode(10)),
       }),
     });
 
@@ -77,7 +104,10 @@ export async function POST(request: NextRequest) {
       console.error("[contact] Resend API error:", errorBody);
 
       return NextResponse.json(
-        { error: "We couldn't send your message right now. Please email us directly." },
+        {
+          error:
+            "We couldn't send your message right now. Please email us directly.",
+        },
         { status: 502 }
       );
     }
@@ -87,7 +117,10 @@ export async function POST(request: NextRequest) {
     console.error("[contact] Failed to send email:", err);
 
     return NextResponse.json(
-      { error: "We couldn't send your message right now. Please email us directly." },
+      {
+        error:
+          "We couldn't send your message right now. Please email us directly.",
+      },
       { status: 502 }
     );
   }
