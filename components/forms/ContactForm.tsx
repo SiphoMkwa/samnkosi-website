@@ -7,15 +7,36 @@ import { z } from "zod";
 import Button from "@/components/ui/Button";
 
 const formSchema = z.object({
-  name: z.string().trim().min(2, "Please enter your full name."),
-  email: z.string().trim().email("Please enter a valid email address."),
-  organization: z.string().trim().optional(),
-  message: z.string().trim().min(10, "Please include a short message."),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Please enter your full name.")
+    .max(100, "Please keep your name under 100 characters."),
+  email: z
+    .string()
+    .trim()
+    .email("Please enter a valid email address.")
+    .max(254, "Please enter a valid email address."),
+  organization: z
+    .string()
+    .trim()
+    .max(200, "Please keep your organization under 200 characters.")
+    .optional(),
+  message: z
+    .string()
+    .trim()
+    .min(10, "Please include a short message.")
+    .max(5000, "Please keep your message under 5,000 characters."),
   // Honeypot — kept empty by real users, hidden from screen readers/visually.
   company_website: z.string().max(0).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+type ContactResponse = {
+  delivered?: boolean;
+  error?: string;
+};
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -43,12 +64,12 @@ export default function ContactForm() {
         body: JSON.stringify(values),
       });
 
-      const data = await response.json();
+      const data = (await response.json().catch(() => ({}))) as ContactResponse;
 
-      if (!response.ok) {
+      if (!response.ok || data.delivered !== true) {
         setStatus("error");
         setStatusMessage(
-          data.error || "Something went wrong. Please try again."
+          data.error || "We couldn't confirm delivery. Please email us directly."
         );
         return;
       }
@@ -143,6 +164,11 @@ export default function ContactForm() {
           className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-[var(--blue)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
           {...register("organization")}
         />
+        {errors.organization && (
+          <p className="mt-1 text-sm text-red-600">
+            {errors.organization.message}
+          </p>
+        )}
       </div>
 
       <div>
